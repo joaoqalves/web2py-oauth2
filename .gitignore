@@ -1,0 +1,15 @@
+*~
+*.pyc
+*.pyo
+*.bak
+*.DS_Store
+cache/*
+databases/*
+errors/*
+sessions/*
+spooler/*
+uploads/*
+private/*
+static/*
+cron/*
+
