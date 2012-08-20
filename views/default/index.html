@@ -1,7 +1,0 @@
-{{extend 'layout.html'}}
-
-{{if 'message' in globals():}}
-    <h3>{{=message}}</h3>
-{{else:}}
-    {{=BEAUTIFY(response._vars)}}
-{{pass}}
