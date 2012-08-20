@@ -14,8 +14,8 @@ Requirements
 * MongoDB
 * PyMongo
 
-I have tested with Python 2.7, MongoDB 2.0.7 and pymongo 2.2.1, but I guess
-it should work properly with other versions.
+I have tested with Python 2.7, MongoDB 2.0.7 and pymongo 2.2.1, but it should
+work properly with other versions.
 NOTE: The OAuthStorage class is extensible, so you can work with DAL if you
 implement it.
 
