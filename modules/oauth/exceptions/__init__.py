@@ -45,10 +45,11 @@ class OAuth2AuthenticateException(Exception):
         self.scope = scope or 'No scope provided'
     
     def __str__(self):
-        return self.http_response + ' | ' + self.token_type + ' | ' \
-               + self.realm + ' | ' + self.error + ' | ' \
-               + self.msg + ' | ' + self.scope
-               
+        return "".join([self.http_response, ' | ', self.token_type, ' | ',
+                        self.realm, ' | ', self.error, ' | ', self.msg,
+                        ' | ', self.scope])
+        # Previous [concat.] method was too slow, see my benchmarks: http://stackoverflow.com/a/14610440/587021
+
 class OAuth2RedirectException(Exception):
     """Redirect the end-user's user agent with error message. It takes 3 
     arguments:
@@ -66,8 +67,9 @@ class OAuth2RedirectException(Exception):
         self.state = state or 'No state provided'
     
     def __str__(self):
-        return self.redirect_uri + ' | ' + self.error + ' | ' \
-               + self.msg + ' | ' + self.state
+        return "".join([self.redirect_uri, ' | ', self.error, ' | ',
+                        self.msg, ' | ', self.state])
+        # Previous [concat.] method was too slow, see my benchmarks: http://stackoverflow.com/a/14610440/587021
                
 class OAuth2ServerException(Exception):
     """Server exception. Something is missing and the request could not be
@@ -83,4 +85,4 @@ class OAuth2ServerException(Exception):
         self.msg = msg
     
     def __str__(self):
-        return self.http_response + ' | ' + self.error + ' | ' + self.msg
+        return "".join([self.http_response, ' | ', self.error, ' | ', self.msg])

@@ -35,8 +35,11 @@ class OAuthStorage(object):
     """Storage interface in order to use the OAuth2 server. It's just an
     interface and you should extend it to your database engine.
     """
-    
-    @staticmethod
+
+    SALT = 'TlG}LJV[nplC5^jZn+Z]TCal`)2[^(_h'
+    # ^ Don't forget to change your SALT! ^
+
+    @staticmethod 
     def generate_hash_512(length = 32, salt = True):
         """Generates a SHA512 random hash. It takes two arguments:
         * length (default: 32)
@@ -46,12 +49,12 @@ class OAuthStorage(object):
         import os
         import hashlib
         import base64
-        
-        SALT = 'TlG}LJV[nplC5^jZn+Z]TCal`)2[^(_h' #CHANGE ME
+
         encode_str = base64.urlsafe_b64encode(os.urandom(length))
         m = hashlib.sha512()
+
         if salt:
-            encode_str = SALT + encode_str
+            encode_str = self.SALT + encode_str
             
         m.update(encode_str)
         return m.hexdigest()
@@ -66,12 +69,13 @@ class OAuthStorage(object):
         import os
         import hashlib
         import base64
-        
-        SALT = 'TlG}LJV[nplC5^jZn+Z]TCal`)2[^(_h' #CHANGE ME
+
         encode_str = base64.urlsafe_b64encode(os.urandom(length))
         m = hashlib.sha1()
+
         if salt:
-            encode_str = SALT + encode_str
+            encode_str = self.SALT + encode_str
+
         m.update(encode_str)
         return m.hexdigest()
         
@@ -83,8 +87,8 @@ class OAuthStorage(object):
         * The database name
         """
         
-        self.server = server
-        self.port = port
+        self.server  = server
+        self.port    = port
         self.db_name = db_name
         
 class MongoStorage(OAuthStorage):
@@ -137,17 +141,15 @@ class MongoStorage(OAuthStorage):
         user_id = ObjectId(user_id)
         expires = add_seconds_to_date(datetime.datetime.now(), lifetime)
 
-        # It guarantees the uniqueness of the code. Better way?
-        while True:
+        # do -> while FTW
+        code = OAuthStorage.generate_hash_sha1()
+        while self.get_refresh_token(code):
             code = OAuthStorage.generate_hash_sha1()
-            if self.db.codes.find_one({'_id': code}) == None:
-                break
-            
 
         self.db.codes.save({'_id': code,
-                         'client_id': client_id,
-                         'user_id': user_id, 
-                         'expires': expires})
+                            'client_id': client_id,
+                            'user_id': user_id, 
+                            'expires': expires})
 
         return code
 
@@ -159,8 +161,8 @@ class MongoStorage(OAuthStorage):
         """
         
         data = self.db.codes.find_one({'_id': code,
-                         'client_id': client_id})
-        if data != None:
+                                       'client_id': client_id})
+        if data:
             return datetime.datetime.now() < data['expires']
 
         return False
@@ -171,7 +173,7 @@ class MongoStorage(OAuthStorage):
         return self.db.codes.find_one({'_id': code}) != None
 
     def remove_code(self, code):
-        """Removes a temporary code of the database"""
+        """Removes a temporary code from the database"""
 
         self.db.codes.remove({'_id': code})
 
@@ -180,8 +182,8 @@ class MongoStorage(OAuthStorage):
         authentication code
         """
         
-        return self.db.codes.find_one({'_id': code, 
-                                       'client_id': client_id})['user_id']
+        return self.db.codes.find_one({'_id': code, 'client_id': client_id}
+                                      )['user_id']
 
     def expired_access_token(self, token):
         """Checks if the access token remains valid or if it has expired"""
@@ -207,30 +209,30 @@ class MongoStorage(OAuthStorage):
         """
         
         now = datetime.datetime.now()
-        
-        # It guarantees uniqueness. Better way?
-        while True:
+
+        # do -> while FTW
+        access_token = MongoStorage.generate_hash_512()
+        while self.get_access_token(access_token):
             access_token = MongoStorage.generate_hash_512()
-            if self.db.tokens.find_one({'access_token': access_token}) == None:
-                break
 
         expires_access = add_seconds_to_date(now, access_lifetime)
 
         # It guarantees uniqueness. Better way?
-        if refresh_token == None:
-            while True:
+        if not refresh_token:
+            # do -> while FTW
+            refresh_token = MongoStorage.generate_hash_512()
+            while self.get_refresh_token(refresh_token):
                 refresh_token = MongoStorage.generate_hash_512()
-                if self.db.tokens.find_one({'_id': refresh_token}) == None:
-                    break
+            
             expires_refresh = add_seconds_to_date(now, refresh_lifetime)
 
         self.db.tokens.save({'_id': refresh_token,
-                         'client_id': client_id,
-                         'user_id': user_id,
-                         'expires_access': expires_access,
-                         'expires_refresh': expires_refresh,
-                         'scope': scope,
-                         'access_token': access_token})
+                             'client_id': client_id,
+                             'user_id': user_id,
+                             'expires_access': expires_access,
+                             'expires_refresh': expires_refresh,
+                             'scope': scope,
+                             'access_token': access_token})
 
         return access_token, refresh_token, expires_access
 
@@ -246,16 +248,16 @@ class MongoStorage(OAuthStorage):
         credentials = get_client_credentials(client_id)
         old_token = self.db.tokens.find_one({'_id': refresh_token,
                                              'client_id': client_id})
-        if old_token and expired_refresh_token(old_token, now) \
-        and credentials['client_secret'] == client_secret:
-            return self.add_access_token(client_id, 
+
+        if old_token and expired_refresh_token(old_token, now) and credentials['client_secret'] == client_secret:
+            return self.add_access_token(client_id,
                                          old_token['user_id'],
                                          self.config[self.CONFIG_ACCESS_LIFETIME],
                                          old_token['refresh_token'],
                                          self.config[self.CONFIG_REFRESH_LIFETIME],
                                          old_token['expires_refresh'],
                                          old_token['scope'])
-        return False, False, False
+        return (False,)*3
         
     def get_access_token(self, access_token):
         """Returns the token data, if the access token exists"""

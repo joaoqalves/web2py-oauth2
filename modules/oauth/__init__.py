@@ -35,7 +35,6 @@ Database Absraction Layer of web2py.
 """
 
 class OAuth2(object):
-
     DEFAULT  = {'access_token_lifetime': 3600,
                 'refresh_token_lifetime': 1209600,
                 'auth_code_lifetime': 30,
@@ -74,7 +73,7 @@ class OAuth2(object):
                   'extensions': 'extensions'}
 
     TOKEN_TYPE = {'bearer': 'bearer', 'mac': 'mac'}
-    
+
     HTTP_RESPONSE = {'found': '302 Found', 
                      'bad_request': '400 Bad Request',
                      'unauthorized': '401 Unauthorized',
@@ -98,6 +97,7 @@ class OAuth2(object):
              'invalid_code': 'invalide_code',
              'invalid_refresh': 'invalid_refresh',
              'expired_refresh': 'expired_refresh'}
+    # ^Bit of overkill here with the object attributes, eh?!
              
     def __init__(self, storage, confs = None):
         """Constructor of the class. It takes 2 arguments:
@@ -112,7 +112,7 @@ class OAuth2(object):
                 'supported_scopes': []}
         """
 
-        if confs == None:
+        if not confs:
             confs = self.DEFAULT
         else:
             confs = dict(self.DEFAULT.items() + confs.items())
@@ -162,7 +162,7 @@ class OAuth2(object):
                                        'Invalid "client_id" parameter.')
                                        
                                        
-        # Valid code?
+        # Valid code?!
         if not self.storage.valid_code(client_id, code):
             raise OAuth2ServerException(self.HTTP_RESPONSE['bad_request'],
                                         self.ERROR['invalid_code'],
@@ -220,13 +220,14 @@ class OAuth2(object):
             access_token, refresh_token, expires_in = self.storage.refresh_access_token(client_id,
                                                 client['client_secret'],
                                                 refresh_token)
-        else: #TODO: Support other grant_types
+        else: # TODO: Support other grant_types
             raise OAuth2ServerException(self.HTTP_RESPONSE['bad_request'],
                                         self.ERROR['unsupported_grant'],
                                         'The grant type given is not supported.')
         
         # Removes the temporary code from the database
         self.storage.remove_code(code)
+
         return access_token, refresh_token, expires_in
 
 
@@ -248,19 +249,11 @@ class OAuth2(object):
                                               token_type,
                                               realm,
                                               self.ERROR['invalid_request'],
-                                              'You should pass all the requested parameters.',
+                                              'Necessary parameters haven\'t been passed in.',
                                               scope)
         
         # Checks redirect_uri parameter
-        if not redirect_uri or not stored_client['redirect_uri']:
-            raise OAuth2AuthenticateException(self.HTTP_RESPONSE['unauthorized_client'],
-                                              token_type,
-                                              realm,
-                                              self.ERROR['redirect_uri_mismatch'],
-                                              'Redirect URI does not match.',
-                                              scope)
-                                              
-        if redirect_uri != stored_client['redirect_uri']:
+        if not redirect_uri or not stored_client['redirect_uri'] or redirect_uri != stored_client['redirect_uri']:
             raise OAuth2AuthenticateException(self.HTTP_RESPONSE['unauthorized_client'],
                                               token_type,
                                               realm,
@@ -320,10 +313,10 @@ class OAuth2(object):
         methods = 0
         token = ''
         
-        if header != None:
+        if header:
             bearer, token = header.split(' ')
         
-            if bearer == None or token == None:
+            if not bearer or not token:
                 raise OAuth2AuthenticateException(self.HTTP_RESPONSE['bad_request'],
                                                   token_type,
                                                   realm,
@@ -340,18 +333,18 @@ class OAuth2(object):
             methods += 1
 
         try:
-            if get_data[self.TOKEN_PARAM_NAME] != None:
+            if get_data[self.TOKEN_PARAM_NAME]:
                 token = get_data[self.TOKEN_PARAM_NAME]
                 methods += 1
         except:
-            pass
+            pass # Do we want a `pass` here?
         
         try:
-            if post_data[self.TOKEN_PARAM_NAME] != None:
+            if post_data[self.TOKEN_PARAM_NAME]:
                 token = post_data[self.TOKEN_PARAM_NAME]
                 methods += 1
         except:
-            pass
+            pass # Do we want a `pass` here?
             
         if methods > 1:
             raise OAuth2AuthenticateException(self.HTTP_RESPONSE['bad_request'],
@@ -359,13 +352,13 @@ class OAuth2(object):
                                               realm,
                                               self.ERROR['invalid_request'],
                                               'Only one method may be used to authenticate at a time (Auth header, GET or POST).')
-        elif methods == 0:
+        elif not methods:
             raise OAuth2AuthenticateException(self.HTTP_RESPONSE['bad_request'],
                                               token_type,
                                               realm,
                                               self.ERROR['invalid_request'],
                                               'The access token was not found.')
-                                      
+
         token = self.storage.get_access_token(token)
 
         if not token:
@@ -375,7 +368,7 @@ class OAuth2(object):
                                               self.ERROR['invalid_grant'],
                                               'Invalid access token.')
             
-        if self.storage.expired_access_token(token):
+        elif self.storage.expired_access_token(token):
             raise OAuth2AuthenticateException(self.HTTP_RESPONSE['unauthorized'],
                                               token_type,
                                               realm,

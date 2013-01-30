@@ -22,5 +22,4 @@ def index():
                               expires_in = expires, refresh_token = refresh))
     except OAuth2ServerException as server_ex:
         error_code, error_msg = server_ex.http_response.split(' ')
-        return meta_data(error_code, error_msg)
-        
+        return meta_data(error_code, error_msg) # Should this be a raise?

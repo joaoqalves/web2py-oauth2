@@ -4,18 +4,18 @@
     </head>
     <body>
             {{if success:}}
-            <h1>Wohoooooo!</h1>
-            <h2>Code</h2>
-            <p>{{=code}}</p>
+                <h1>Wohoooooo!</h1>
+                <h2>Code</h2>
+                <p>{{=code}}</p>
             {{else:}}
-            Do you Authorize the access?
-            <form action="oauth2{{=url}}" method="post">
-            {{for k,v in request.get_vars.items():}}
-            <input type="hidden" name="{{=k}}" value="{{=v}}" />
-            {{pass}}
-            <input type="submit" name="accept" value="Yes" />
-            <input type="submit" name="accept" value="No" />
-            </form>
-            {{pass}}  
+                Do you Authorize the access?
+                <form action="oauth2{{=url}}" method="post">
+                {{for k,v in request.get_vars.items():}}
+                    <input type="hidden" name="{{=k}}" value="{{=v}}" />
+                    {{pass}}
+                <input type="submit" name="accept" value="Yes" />
+                <input type="submit" name="accept" value="No" />
+                </form>
+                {{pass}}
     </body>
 </html>
