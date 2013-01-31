@@ -31,9 +31,10 @@ def index():
     try:
         params = oauth.validate_authorize_params(request.get_vars)
     except Exception as ex:
-        redirect(URL(c='error', vars=dict(msg=ex.msg)))
+        redirect(URL(c='error', vars=dict(msg=(ex.msg or ex)))
 
     #POST request. Yes/No answer
+    print 'dir(request) =', str(request)
     if request.post_vars:
         success = True
         
@@ -59,8 +60,9 @@ def index():
         url = '?' + 'client_id=' + client_id \
                   + '&redirect_uri=' + redirect_uri + '&response_type=' \
                   + response_type + '&access_type=' + access_type
+        print 'url =', url
     except Exception as ex:
-        redirect(URL(c='error', vars=dict(msg=ex.msg)))
+        redirect(URL(c='error', vars=dict(msg=(ex.msg or ex)))
 
     return locals()
 
