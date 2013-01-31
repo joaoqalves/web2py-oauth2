@@ -32,7 +32,7 @@ def validate_access_token(f):
         return f # what does f have?
 
     except OAuth2AuthenticateException as auth_ex:
-        error_code, error_msg = auth_ex.http_response.split(' ')
+        error_code, error_msg = auth_ex.http_response.split(' ', 1)
         return lambda: meta_data(error_code, error_msg)
 
     except OAuth2RedirectException as redir_ex:
