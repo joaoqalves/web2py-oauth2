@@ -15,7 +15,7 @@ def index():
     response.view = json_service()
 
     try:
-        token, refresh, expires = oauth.grant_access_token(request.post_vars)
+        token, refresh, expires = oauth.grant_access_token(request.get_vars)
         return meta_data(CODES['ok'],
                          MESSAGES['ok'],
                          dict(access_token = token, token_type = 'Bearer',
