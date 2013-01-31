@@ -3,7 +3,7 @@
 
 def index():
 	"""Error page. It only shows an error message"""
-    
-    error = request.vars['msg']
-    return locals()
 
+	error = request.vars['msg']
+
+	return locals()
