@@ -4,22 +4,24 @@
     </head>
     <body>
             {{if success:}}
-            <h1>Wohoooooo!</h1>
-            <h2>Client name</h2>
-            <p>{{=client_name}}</p>
-            <h2>Client ID</h2>
-            <p>{{=client_id}}</p>
-            <h2>Client Secret</h2>
-            <p>{{=client_secret}}</p>
-            <h2>Redirect URI</h2>
-            <p>{{=client_uri}}</p>
+                <h1>Wohoooooo!</h1>
+                <h2>Client name</h2>
+                <p>{{=client_name}}</p>
+                <h2>Client ID</h2>
+                <p>{{=client_id}}</p>
+                <h2>Client Secret</h2>
+                <p>{{=client_secret}}</p>
+                <h2>Redirect URI</h2>
+                <p>{{=client_uri}}</p>
             {{else:}}
-            New client? Please fill these fields
-            <form action="{{=URL(c='add_client')}}" method="post">    
-            Client Name: <input type="text" name="client_name" />
-            Redirect URI: <input type="text" name="client_uri" />
-            <input type="submit" name="accept" value="Create" />
-            </form>
-            {{pass}}  
+                New client? Please fill these fields
+                <form action="{{=URL(c='add_client')}}" method="post">    
+                    <label class="control-label" for="client_name">Client Name</label>
+                        <input type="text" name="client_name" />
+                    <label class="control-label" for="client_name">Redirect URI</label>
+                        <input type="text" name="client_uri" />
+                    <input type="submit" name="accept" value="Create" />
+                </form>
+            {{pass # ^Where is my CSRF?}}  
     </body>
 </html>

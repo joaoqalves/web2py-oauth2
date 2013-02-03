@@ -9,6 +9,8 @@ def index():
     
     response.headers['Content-Type'] = json_headers()
     response.view = json_service()
+
+    print "testing"
                                         
     return meta_data(CODES['ok'], MESSAGES['ok'], 
                      dict(data='Protected resource'))

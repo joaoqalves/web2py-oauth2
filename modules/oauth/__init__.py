@@ -27,6 +27,7 @@ import pymongo
 import datetime
 from exceptions import *
 import storage as oauthstorage
+from gluon.http import HTTP # For raising HTTP error codes with optional custom messages
 
 """OAuth 2.0 draft 20 server in Python (for web2py framework), based on the PHP
 OAuth2 Server <https://github.com/quizlet/oauth2-php>. It has the bearer token
@@ -35,7 +36,6 @@ Database Absraction Layer of web2py.
 """
 
 class OAuth2(object):
-
     DEFAULT  = {'access_token_lifetime': 3600,
                 'refresh_token_lifetime': 1209600,
                 'auth_code_lifetime': 30,
@@ -74,7 +74,7 @@ class OAuth2(object):
                   'extensions': 'extensions'}
 
     TOKEN_TYPE = {'bearer': 'bearer', 'mac': 'mac'}
-    
+
     HTTP_RESPONSE = {'found': '302 Found', 
                      'bad_request': '400 Bad Request',
                      'unauthorized': '401 Unauthorized',
@@ -85,19 +85,7 @@ class OAuth2(object):
     HTTP_CONTENT_TYPE = 'http_content_type'
     HTTP_REQUEST_METHOD = 'request_method'
 
-    ERROR = {'invalid_request': 'invalid_request',
-             'invalid_client': 'invalid_client',
-             'unauthorized_client': 'unauthorized_client',
-             'redirect_uri_mismatch': 'redirect_uri_mismatch',
-             'access_denied': 'access_denied',
-             'unsupported_response_type': 'unsupported_response_type',
-             'invalid_scope': 'invalid_scope',
-             'invalid_grant': 'invalid_grant',
-             'unsupported_grant_type': 'unsupported_grant_type',
-             'insufficient_scope': 'invalid_scope',
-             'invalid_code': 'invalide_code',
-             'invalid_refresh': 'invalid_refresh',
-             'expired_refresh': 'expired_refresh'}
+    # ^Bit of overkill here with the object attributes, eh?!
              
     def __init__(self, storage, confs = None):
         """Constructor of the class. It takes 2 arguments:
@@ -112,7 +100,7 @@ class OAuth2(object):
                 'supported_scopes': []}
         """
 
-        if confs == None:
+        if not confs:
             confs = self.DEFAULT
         else:
             confs = dict(self.DEFAULT.items() + confs.items())
@@ -140,57 +128,36 @@ class OAuth2(object):
         code = input_data['code']
         client_id = input_data['client_id']
         if not code:
-            raise OAuth2ServerException(self.HTTP_RESPONSE['bad_request'],
-                                        self.ERROR['invalid_code'],
-                                        'Missing parameter. "code" is required.')
-                                        
+            raise HTTP(412, 'KeyError: Parameter missing; "code" is required.')
                     
-        if not self.storage.exists_code(code):
-            raise OAuth2ServerException(self.HTTP_RESPONSE['bad_request'],
-                                        self.ERROR['invalid_code'],
-                                        'Invalid "code".')
+        elif not self.storage.exists_code(code):
+            raise HTTP(424, 'LookupError: Supplied "code" is invalid.')
                                         
         # Checks the "client_id" parameter
-        if not client_id:
-            raise OAuth2ServerExeption(self.HTTP_RESPONSE['bad_request'],
-                                       self.ERROR['invalid_client'],
-                                       'Missing parameter. "client_id" is required.')
+        elif not client_id:
+            raise HTTP(412, 'KeyError: Parameter missing; "client_id" is required.')
                                        
-        if not self.storage.exists_client(client_id):
-            raise OAuth2ServerExeption(self.HTTP_RESPONSE['bad_request'],
-                                       self.ERROR['invalid_client'],
-                                       'Invalid "client_id" parameter.')
+        elif not self.storage.exists_client(client_id):
+            raise HTTP(424, 'LookupError: Supplied "client_id" is invalid.')
                                        
-                                       
-        # Valid code?
-        if not self.storage.valid_code(client_id, code):
-            raise OAuth2ServerException(self.HTTP_RESPONSE['bad_request'],
-                                        self.ERROR['invalid_code'],
-                                        'The "code" provided has expired')
-
-                                       
+        # Expired code?
+        elif not self.storage.valid_code(client_id, code):
+            raise HTTP(410, 'ValueError: The "code" provided has expired')
                                        
         # Checks the "grant_type" parameter
-        if not input_data['grant_type']:
-            raise OAuth2ServerException(self.HTTP_RESPONSE['bad_request'],
-                                        self.ERROR['invalid_grant'],
-                                        'Missing parameter. "grant_type" is required.')
-
+        elif not input_data['grant_type']:
+            raise HTTP(412, 'KeyError: Parameter missing; "grant_type" is required.')
 
         # Checks client application credentials
         client = self.storage.get_client_credentials(client_id)
         client_secret = input_data['client_secret']
         if not client_secret or client_secret != client['client_secret']:
-            raise OAuth2ServerException(self.HTTP_RESPONSE['bad_request'],
-                                        self.ERROR['invalid_client'],
-                                        'Invalid "client_secret" parameter.')
+            raise HTTP(424, 'LookupError: Supplied "client_secret" is invalid.')
 
         redirect_uri = input_data['redirect_uri']
-        print redirect_uri, client['redirect_uri']
+        #print redirect_uri, client['redirect_uri']
         if not redirect_uri or redirect_uri != client['redirect_uri']:
-            raise OAuth2ServerException(self.HTTP_RESPONSE['bad_request'],
-                                        self.ERROR['redirect_uri_mismatch'],
-                                        'Invalid or mismatch redirect URI.')
+            raise HTTP(418, 'NameError: Invalid or mismatch redirect URI.') # you wanted a teapot... right?!
 
         # Generates the access and tokens
         user_id = self.storage.get_user_id(client_id, code)
@@ -201,32 +168,25 @@ class OAuth2(object):
                 
         elif input_data['grant_type'] == self.GRANT_TYPE['refresh_token']:
             if not input_data['refresh_token']:
-                 raise OAuth2ServerException(self.HTTP_RESPONSE['bad_request'],
-                                             self.ERROR['invalid_refresh'],
-                                             'Missing parameter. "refresh_token" is required')
+                raise HTTP(412, 'KeyError: Parameter missing; "refresh_token" is required.')
             
             refresh_token = self.storage.get_refresh_token(input_data['refresh_token'])
             
             if not refresh_token:
-                raise OAuth2ServerException(self.HTTP_RESPONSE['bad_request'],
-                                            self.ERROR['invalid_refresh'],
-                                            'Invalid "refresh_token".')
+                raise HTTP(418, 'NameError: Invalid or mismatch refresh_token.')
                                             
-            if self.storage.expired_refresh_token(refresh_token):
-                raise OAuth2ServerException(self.HTTP_RESPONSE['bad_request'],
-                                            self.ERROR['expired_refresh'],
-                                            'This "refresh_token" has expired.')
+            elif self.storage.expired_refresh_token(refresh_token):
+                raise HTTP(410, 'ValueError: The "refresh_token" provided has expired')
                                             
             access_token, refresh_token, expires_in = self.storage.refresh_access_token(client_id,
                                                 client['client_secret'],
                                                 refresh_token)
-        else: #TODO: Support other grant_types
-            raise OAuth2ServerException(self.HTTP_RESPONSE['bad_request'],
-                                        self.ERROR['unsupported_grant'],
-                                        'The grant type given is not supported.')
+        else: # TODO: Support other grant_types
+            raise HTTP(501, 'The grant type given is not supported.')
         
         # Removes the temporary code from the database
         self.storage.remove_code(code)
+
         return access_token, refresh_token, expires_in
 
 
@@ -244,72 +204,35 @@ class OAuth2(object):
         
         # Checks if the they were passed any parameters
         if not input_data:
-            raise OAuth2AuthenticateException(self.HTTP_RESPONSE['bad_request'],
-                                              token_type,
-                                              realm,
-                                              self.ERROR['invalid_request'],
-                                              'You should pass all the requested parameters.',
-                                              scope)
+            raise HTTP(412, 'KeyError: All parameters are missing :(.')
         
         # Checks redirect_uri parameter
-        if not redirect_uri or not stored_client['redirect_uri']:
-            raise OAuth2AuthenticateException(self.HTTP_RESPONSE['unauthorized_client'],
-                                              token_type,
-                                              realm,
-                                              self.ERROR['redirect_uri_mismatch'],
-                                              'Redirect URI does not match.',
-                                              scope)
-                                              
-        if redirect_uri != stored_client['redirect_uri']:
-            raise OAuth2AuthenticateException(self.HTTP_RESPONSE['unauthorized_client'],
-                                              token_type,
-                                              realm,
-                                              self.ERROR['redirect_uri_mismatch'],
-                                              'Redirect URI does not match.',
-                                              scope)
+        elif not redirect_uri or not stored_client['redirect_uri'] or redirect_uri != stored_client['redirect_uri']:
+            raise HTTP(418, 'NameError: Invalid or mismatch redirect URI.') # you wanted a teapot... right?!
 
         # Checks client_id parameter
-        if not client_id:
-            raise OAuth2AuthenticateException(self.HTTP_RESPONSE['unauthorized_client'],
-                                              token_type,
-                                              realm,
-                                              self.ERROR['invalid_client'],
-                                              'Missing parameters. "client_id" is required.',
-                                              scope)
-        
+        elif not client_id:
+            raise HTTP(412, 'KeyError: Parameter missing; "client_id" is required.')
+
         # Checks the stored client details
-        if not stored_client:
-            raise OAuth2AuthenticateException(self.HTTP_RESPONSE['unauthorized_client'],
-                                              token_type,
-                                              realm,
-                                              self.ERROR['invalid_client'],
-                                              'Invalid "client_id".',
-                                              scope)
-                                              
+        elif not stored_client:
+            raise HTTP(424, 'LookupError: Supplied "client_id" is invalid.')                                              
         
         # Checks the response type parameter
-        if not response_type:
-            raise OAuth2RedirectException(redirect_uri,
-                                          self.ERROR['invalid_request'],
-                                          'Missing parameters. "response_type" is required.')
+        elif not response_type:
+            raise HTTP(412, 'KeyError: Parameter missing; "response_type" is required.')
 
         #TODO: Support other response types
-        if response_type != self.RESPONSE_TYPE_AUTH_CODE:
-            raise OAuth2RedirectException(redirect_uri,
-                                          self.ERROR['unsupported_response_type'],
-                                          'Response type not supported.')
+        elif response_type != self.RESPONSE_TYPE_AUTH_CODE:
+            raise HTTP(501, 'The response type you requested is unsupported.')
 
         # Checks the scope parameter
-        if scope and not self.check_scope(scope, self.config[self.CONFIG_SUPPORTED_SCOPES]):
-            raise OAuth2RedirectException(redirect_uri,
-                                          self.ERROR['invalid_scope'],
-                                          'An unsupported scope was requested.')
+        elif scope and not self.check_scope(scope, self.config[self.CONFIG_SUPPORTED_SCOPES]):
+            raise HTTP(501, 'The scope you requested is unsupported.')
 
         # Checks the state parameter
-        if not state and self.config[self.CONFIG_ENFORCE_STATE]:
-            raise OAuth2RedirectException(redirect_uri,
-                                          self.ERROR['invalid_request'],
-                                          'The state parameter is required.')
+        elif not state and self.config[self.CONFIG_ENFORCE_STATE]:
+            raise HTTP(412, 'KeyError: Parameter missing; "state" is required.')
 
         return input_data
         
@@ -320,67 +243,44 @@ class OAuth2(object):
         methods = 0
         token = ''
         
-        if header != None:
+        if header:
             bearer, token = header.split(' ')
         
-            if bearer == None or token == None:
-                raise OAuth2AuthenticateException(self.HTTP_RESPONSE['bad_request'],
-                                                  token_type,
-                                                  realm,
-                                                  self.ERROR['invalid_request'],
-                                                  'Malformed auth header')
+            if not bearer or not token:
+                raise HTTP(401, 'Malformed auth header')
                                                   
-            if bearer != self.TOKEN_BEARER_HEADER_NAME:
-                raise OAuth2AuthenticateException(self.HTTP_RESPONSE['bad_request'],
-                                                  token_type,
-                                                  realm,
-                                                  self.ERROR['invalid_request'],
-                                                  'Only "Bearer" token type is allowed')
+            elif bearer != self.TOKEN_BEARER_HEADER_NAME:
+                raise HTTP(415, 'Only "Bearer" token type is allowed')
         
             methods += 1
 
         try:
-            if get_data[self.TOKEN_PARAM_NAME] != None:
+            if get_data[self.TOKEN_PARAM_NAME]:
                 token = get_data[self.TOKEN_PARAM_NAME]
                 methods += 1
         except:
-            pass
+            pass # Do we want a `pass` here?
         
         try:
-            if post_data[self.TOKEN_PARAM_NAME] != None:
+            if post_data[self.TOKEN_PARAM_NAME]:
                 token = post_data[self.TOKEN_PARAM_NAME]
                 methods += 1
         except:
-            pass
+            pass # Do we want a `pass` here?
             
         if methods > 1:
-            raise OAuth2AuthenticateException(self.HTTP_RESPONSE['bad_request'],
-                                              token_type,
-                                              realm,
-                                              self.ERROR['invalid_request'],
-                                              'Only one method may be used to authenticate at a time (Auth header, GET or POST).')
-        elif methods == 0:
-            raise OAuth2AuthenticateException(self.HTTP_RESPONSE['bad_request'],
-                                              token_type,
-                                              realm,
-                                              self.ERROR['invalid_request'],
-                                              'The access token was not found.')
-                                      
+            raise HTTP(405, 'Only one method may be used to authenticate at a time (Auth header, GET or POST).')
+
+        elif not methods:
+            raise HTTP(424, 'LookupError: Supplied access token is invalid.')
+
         token = self.storage.get_access_token(token)
 
         if not token:
-            raise OAuth2AuthenticateException(self.HTTP_RESPONSE['unauthorized'],
-                                              token_type,
-                                              realm,
-                                              self.ERROR['invalid_grant'],
-                                              'Invalid access token.')
+            raise HTTP(424, 'LookupError: Supplied access token is invalid.')
             
-        if self.storage.expired_access_token(token):
-            raise OAuth2AuthenticateException(self.HTTP_RESPONSE['unauthorized'],
-                                              token_type,
-                                              realm,
-                                              self.ERROR['invalid_grant'],
-                                              'The access token provided has expired.')
+        elif self.storage.expired_access_token(token):
+            raise HTTP(410, 'ValueError: The access token provided has expired')
                                               
         return token['access_token']
 

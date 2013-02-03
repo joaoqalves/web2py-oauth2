@@ -15,12 +15,11 @@ def index():
     response.view = json_service()
 
     try:
-        token, refresh, expires = oauth.grant_access_token(request.post_vars)
+        token, refresh, expires = oauth.grant_access_token(request.get_vars)
         return meta_data(CODES['ok'],
                          MESSAGES['ok'],
                          dict(access_token = token, token_type = 'Bearer',
                               expires_in = expires, refresh_token = refresh))
     except OAuth2ServerException as server_ex:
-        error_code, error_msg = server_ex.http_response.split(' ')
-        return meta_data(error_code, error_msg)
-        
+        error_code, error_msg = server_ex.http_response.split(' ', 1)
+        return meta_data(error_code, error_msg) # Should this be a raise?

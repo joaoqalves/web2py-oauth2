@@ -3,10 +3,10 @@
         <title>Web2py-OAuth2.0 :: Callback</title>
     </head>
     <body>
-            {{if code != None:}}
-            <h1>Access Granted</h1>
+            {{if code:}}
+                <h1>Access Granted</h1>
             {{else:}}
-            <h1 style="color:red">Ooops. The user has refused your request</h1>
+                <h1 style="color:red">Ooops. The user has refused your request</h1>
             {{pass}}
     </body>
 </html>

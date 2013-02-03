@@ -18,23 +18,23 @@ def index():
     """
     
     code = request.get_vars['code']
-    if code != None:
-        # Prepares the request parameters
-        url = APP['TOKEN_URI']
-        values = dict(code = code,
-                      client_id = APP['CLIENT_ID'],
-                      client_secret= APP['CLIENT_SECRET'],
-                      redirect_uri = APP['REDIRECT_URI'],
-                      grant_type = 'authorization_code')
+    if code:
+      # Prepares the request parameters
+      url = APP['TOKEN_URI']
+      values = dict(code = code,
+                    client_id = APP['CLIENT_ID'],
+                    client_secret= APP['CLIENT_SECRET'],
+                    redirect_uri = APP['REDIRECT_URI'],
+                    grant_type = 'authorization_code')
                       
-        data = urllib.urlencode(values)
-        req = urllib2.Request(url, data)
-        rsp = urllib2.urlopen(req)
+      data = urllib.urlencode(values)
+      req = urllib2.Request(url, data)
+      rsp = urllib2.urlopen(req)
         
-        # Gets the answer
-        content = rsp.read()
-        response.headers['Content-Type'] = json_headers()
-        response.view = json_service()
-        return content
+      # Gets the answer
+      content = rsp.read()
+      response.headers['Content-Type'] = json_headers()
+      response.view = json_service()
+      return content
         
     redirect(URL(c='error',vars=dict(msg='No "code" parameter provided')))
