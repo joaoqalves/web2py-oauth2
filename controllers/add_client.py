@@ -8,9 +8,10 @@ def index():
     generated.
     """
     
-    mongo = MongoStorage()
-    mongo.connect()
-    oauth = OAuth2(mongo)
+    from oauth.storage import web2pyStorage as storage # change to MongoStorage if you aren't using DAL
+    storage = storage()
+    storage.connect()
+    oauth = OAuth2(storage)
     
     success = False
     if request.post_vars:

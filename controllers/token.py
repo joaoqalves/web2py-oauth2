@@ -1,15 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+
 def index():
     """
     Exchange a <code, client_id, client_secret, redirect_uri> for an access
     token.
     """
 
-    mongo = MongoStorage()
-    mongo.connect()
-    oauth = OAuth2(mongo)
+    storage = storage()
+    storage.connect()
+    oauth = OAuth2(storage)
 
     response.headers['Content-Type'] = json_headers()
     response.view = json_service()

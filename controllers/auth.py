@@ -17,13 +17,14 @@ def index():
     redirect_uri=[your_callback_uri]&
     response_type=code&
     access_type=online
-    NOTE: You can pass a "scope" parameter, but you need to configure it at the
+    NOTE: You can pass a "the_scope" parameter, but you need to configure it at the
     OAuth2 object constructor.
     """
     
-    mongo = MongoStorage()
-    mongo.connect()
-    oauth = OAuth2(mongo)
+    from oauth.storage import web2pyStorage as storage # change to MongoStorage if you aren't using DAL
+    storage = storage()
+    storage.connect()
+    oauth = OAuth2(storage)
     
     # Validates GET parameters
     params = dict()
@@ -31,7 +32,7 @@ def index():
     try:
         params = oauth.validate_authorize_params(request.get_vars)
     except Exception as ex:
-        redirect(URL(c='error', vars=dict(msg=(ex.msg or ex)))
+        redirect(URL(c='error', vars=dict(msg=(ex.msg or ex))))
 
     #POST request. Yes/No answer
     print 'dir(request) =', str(request)
@@ -53,7 +54,7 @@ def index():
     try:
         client_id = params['client_id']
         redirect_uri = params['redirect_uri']
-        scope = params['scope']
+        the_scope = params['the_scope']
         response_type = params['response_type']
         access_type = params['access_type']
 

@@ -5,7 +5,7 @@ import dateutil.parser, datetime
 from bson.objectid import ObjectId
 from gluon.custom_import import track_changes
 from oauth import OAuth2
-from oauth.storage import MongoStorage
+from oauth.storage import web2pyStorage as storage # change to MongoStorage if you aren't using DAL
 from oauth.exceptions import *
 track_changes(True)
 
@@ -17,9 +17,15 @@ def validate_access_token(f):
     Function decorator which validates an access token.
     """
     
-    mongo = MongoStorage()
-    mongo.connect()
-    oauth = OAuth2(mongo)
+    from inspect import get_members
+    
+    print get_members(OAuth2)
+    
+    pass
+    
+    storage = storage()
+    storage.connect()
+    oauth = OAuth2(storage)
     
     response.headers['Content-Type'] = json_headers()
     response.view = json_service()
