@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# Copyright 2013 Samuel Marks <samuelmarks@gmail.com>
 # Copyright 2012 João Alves <joaoqalves@gmail.com> and Tiago Pereira
 # <tiagomiguelmoreirapereira@gmail.com>
 
@@ -113,6 +114,8 @@ class OAuth2(object):
                        self.CONFIG_ENFORCE_INPUT_REDIRECT: confs[self.CONFIG_ENFORCE_INPUT_REDIRECT],
                        self.CONFIG_ENFORCE_STATE: confs[self.CONFIG_ENFORCE_STATE],
                        self.CONFIG_SUPPORTED_SCOPES: confs[self.CONFIG_SUPPORTED_SCOPES]}
+        
+        print 'storage =', storage
 
         self.storage = storage
 
@@ -196,7 +199,7 @@ class OAuth2(object):
         client_id = input_data['client_id']
         response_type = input_data['response_type']
         state = input_data['state']
-        scope = input_data['scope']
+        the_scope = input_data['the_scope']
         redirect_uri = input_data['redirect_uri']
         token_type = self.config[self.CONFIG_TOKEN_TYPE]
         realm = self.config[self.CONFIG_WWW_REALM]
@@ -226,8 +229,8 @@ class OAuth2(object):
         elif response_type != self.RESPONSE_TYPE_AUTH_CODE:
             raise HTTP(501, 'The response type you requested is unsupported.')
 
-        # Checks the scope parameter
-        elif scope and not self.check_scope(scope, self.config[self.CONFIG_SUPPORTED_SCOPES]):
+        # Checks the the_scope parameter
+        elif the_scope and not self.check_the_scope(the_scope, self.config[self.CONFIG_SUPPORTED_SCOPES]):
             raise HTTP(501, 'The scope you requested is unsupported.')
 
         # Checks the state parameter
@@ -237,7 +240,6 @@ class OAuth2(object):
         return input_data
         
     def validate_access_params(self, get_data, post_data, header):
-    
         token_type = self.config[self.CONFIG_TOKEN_TYPE]
         realm = self.config[self.CONFIG_WWW_REALM]
         methods = 0
