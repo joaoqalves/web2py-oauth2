@@ -21,7 +21,7 @@ def index():
     OAuth2 object constructor.
     """
     
-    from oauth.storage import web2pyStorage as storage # change to MongoStorage if you aren't using DAL
+    from oauth.storage import web2pyStorage as storage  # change to MongoStorage if you aren't using DAL
     storage = storage()
     storage.connect()
     oauth = OAuth2(storage)
@@ -32,22 +32,21 @@ def index():
     try:
         params = oauth.validate_authorize_params(request.get_vars)
     except Exception as ex:
-        redirect(URL(c='error', vars=dict(msg=(ex.msg or ex))))
+        redirect(URL(c='error', vars=dict(msg=ex)))
 
-    #POST request. Yes/No answer
-    print 'dir(request) =', str(request)
+    # POST request. Yes/No answer
     if request.post_vars:
         success = True
         
         # Access given by the user?
         if request.post_vars['accept'] == 'Yes':
-            user_id ='501faa19a34feb05890005c9' # Change it. Get it from your DB
-            code = oauth.storage.add_code(request.post_vars['client_id'], 
+            user_id = '501faa19a34feb05890005c9'  # Change it. Get it from your DB
+            code = oauth.storage.add_code(request.post_vars['client_id'],
                                           user_id,
                                           oauth.config[oauth.CONFIG_CODE_LIFETIME])
-            redirect(request.get_vars['redirect_uri']+'?code='+code)
+            redirect(request.get_vars['redirect_uri'] + '?code=' + code)
         else:
-            redirect(request.get_vars['redirect_uri']+'#error=access_denied')
+            redirect(request.get_vars['redirect_uri'] + '#error=access_denied')
 
     # Builds the response URL
     url = ''

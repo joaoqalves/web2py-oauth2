@@ -5,7 +5,7 @@ import dateutil.parser, datetime
 from bson.objectid import ObjectId
 from gluon.custom_import import track_changes
 from oauth import OAuth2
-from oauth.storage import web2pyStorage as storage # change to MongoStorage if you aren't using DAL
+from oauth.storage import web2pyStorage as storage  # change to MongoStorage if you aren't using DAL
 from oauth.exceptions import *
 track_changes(True)
 
@@ -16,13 +16,8 @@ def validate_access_token(f):
     """
     Function decorator which validates an access token.
     """
-    
-    from inspect import get_members
-    
-    print get_members(OAuth2)
-    
-    pass
-    
+
+    from oauth.storage import web2pyStorage as storage  # change to MongoStorage if you aren't using DAL
     storage = storage()
     storage.connect()
     oauth = OAuth2(storage)
@@ -30,22 +25,11 @@ def validate_access_token(f):
     response.headers['Content-Type'] = json_headers()
     response.view = json_service()
 
-    try:
-        header = request.env['http_authorization']
-        token = oauth.validate_access_params(request.get_vars, request.post_vars,
-                                             header)
-                                        
-        return f # what does f have?
-
-    except OAuth2AuthenticateException as auth_ex:
-        error_code, error_msg = auth_ex.http_response.split(' ', 1)
-        return lambda: meta_data(error_code, error_msg)
-
-    except OAuth2RedirectException as redir_ex:
-        return lambda: meta_data(redir_ex.error, redir_ex.msg)
-
-def meta_data(code, msg, information = {}):
-    return dict({'code':code, 'msg':msg}.items() + information.items())
+    header = request.env['http_authorization']
+    token = oauth.validate_access_params(request.get_vars, request.post_vars,
+                                         header)
+                                    
+    return f  # what does f have?
               
 def parse_to_date(default, arg):
     try:

@@ -28,7 +28,7 @@ import pymongo
 import datetime
 from exceptions import *
 import storage as oauthstorage
-from gluon.http import HTTP # For raising HTTP error codes with optional custom messages
+from gluon.http import HTTP  # For raising HTTP error codes with optional custom messages
 
 """OAuth 2.0 draft 20 server in Python (for web2py framework), based on the PHP
 OAuth2 Server <https://github.com/quizlet/oauth2-php>. It has the bearer token
@@ -37,7 +37,7 @@ Database Absraction Layer of web2py.
 """
 
 class OAuth2(object):
-    DEFAULT  = {'access_token_lifetime': 3600,
+    DEFAULT = {'access_token_lifetime': 3600,
                 'refresh_token_lifetime': 1209600,
                 'auth_code_lifetime': 30,
                 'realm': 'Service',
@@ -76,7 +76,7 @@ class OAuth2(object):
 
     TOKEN_TYPE = {'bearer': 'bearer', 'mac': 'mac'}
 
-    HTTP_RESPONSE = {'found': '302 Found', 
+    HTTP_RESPONSE = {'found': '302 Found',
                      'bad_request': '400 Bad Request',
                      'unauthorized': '401 Unauthorized',
                      'forbidden': '403 Forbidden',
@@ -88,7 +88,7 @@ class OAuth2(object):
 
     # ^Bit of overkill here with the object attributes, eh?!
              
-    def __init__(self, storage, confs = None):
+    def __init__(self, storage, confs=None):
         """Constructor of the class. It takes 2 arguments:
         * The storage (database) instance where the data should be saved
         * A configuration dictionary like the default one:
@@ -156,14 +156,14 @@ class OAuth2(object):
             raise HTTP(424, 'LookupError: Supplied "client_secret" is invalid.')
 
         redirect_uri = input_data['redirect_uri']
-        #print redirect_uri, client['redirect_uri']
+        # print redirect_uri, client['redirect_uri']
         if not redirect_uri or redirect_uri != client['redirect_uri']:
-            raise HTTP(418, 'NameError: Invalid or mismatch redirect URI.') # you wanted a teapot... right?!
+            raise HTTP(418, 'NameError: Invalid or mismatch redirect URI.')  # you wanted a teapot... right?!
 
         # Generates the access and tokens
         user_id = self.storage.get_user_id(client_id, code)
         if input_data['grant_type'] == self.GRANT_TYPE['auth_code']:
-            access_token, refresh_token, expires_in = self.storage.add_access_token(client_id, 
+            access_token, refresh_token, expires_in = self.storage.add_access_token(client_id,
                 user_id, self.config[self.CONFIG_ACCESS_LIFETIME], None,
                 self.config[self.CONFIG_REFRESH_LIFETIME])
                 
@@ -182,7 +182,7 @@ class OAuth2(object):
             access_token, refresh_token, expires_in = self.storage.refresh_access_token(client_id,
                                                 client['client_secret'],
                                                 refresh_token)
-        else: # TODO: Support other grant_types
+        else:  # TODO: Support other grant_types
             raise HTTP(501, 'The grant type given is not supported.')
         
         # Removes the temporary code from the database
@@ -209,7 +209,7 @@ class OAuth2(object):
         
         # Checks redirect_uri parameter
         elif not redirect_uri or not stored_client['redirect_uri'] or redirect_uri != stored_client['redirect_uri']:
-            raise HTTP(418, 'NameError: Invalid or mismatch redirect URI.') # you wanted a teapot... right?!
+            raise HTTP(418, 'NameError: Invalid or mismatch redirect URI.')  # you wanted a teapot... right?!
 
         # Checks client_id parameter
         elif not client_id:
@@ -223,7 +223,7 @@ class OAuth2(object):
         elif not response_type:
             raise HTTP(412, 'KeyError: Parameter missing; "response_type" is required.')
 
-        #TODO: Support other response types
+        # TODO: Support other response types
         elif response_type != self.RESPONSE_TYPE_AUTH_CODE:
             raise HTTP(501, 'The response type you requested is unsupported.')
 
@@ -259,14 +259,14 @@ class OAuth2(object):
                 token = get_data[self.TOKEN_PARAM_NAME]
                 methods += 1
         except:
-            pass # Do we want a `pass` here?
+            pass  # Do we want a `pass` here?
         
         try:
             if post_data[self.TOKEN_PARAM_NAME]:
                 token = post_data[self.TOKEN_PARAM_NAME]
                 methods += 1
         except:
-            pass # Do we want a `pass` here?
+            pass  # Do we want a `pass` here?
             
         if methods > 1:
             raise HTTP(405, 'Only one method may be used to authenticate at a time (Auth header, GET or POST).')
