@@ -110,17 +110,29 @@ class web2pyStorage(OAuthStorage):
 
         # Note that (by default): an 'id' primary key is associated with every table.        
         self.db.define_table('clients',
+            Field('client_id'), # pid
             Field('client_secret'),
             Field('redirect_uri', requires=IS_URL(allowed_schemes=['http','https'])),
             Field('client_name')
         )
 
         self.db.define_table('codes',
+            Field('code_id'), # pid
             Field('client_id', 'reference clients'),
             Field('user_id'),
             Field('expires_access', 'datetime'),
             Field('expires_refresh', 'datetime'),
             Field('the_scope'), # 'scope' is a reserved SQL keyword
+            Field('access_token')
+        )
+        
+        self.db.define_table('tokens',
+            Field('refresh_token'), # pid
+            Field('client_id'),
+            Field('user_id'),
+            Field('expires_access'),
+            Field('expires_refresh'),
+            Field('the_scope'),
             Field('access_token')
         )
 
@@ -153,10 +165,8 @@ class web2pyStorage(OAuthStorage):
         
         client_id = self.generate_hash_sha1()
         client_secret = self.generate_hash_sha1()
-
-        print dir(self.db)
         
-        self.db.clients.insert(**{'id': client_id,
+        self.db.clients.insert(**{'client_id': client_id,
                                   'client_secret': client_secret,
                                   'redirect_uri': redirect_uri,
                                   'client_name': client_name})
@@ -193,9 +203,9 @@ class web2pyStorage(OAuthStorage):
         while self.get_refresh_token(code):
             code = self.generate_hash_sha1()
 
-        self.db.codes(code).update(**{'client_id': client_id,
-                                      'user_id': user_id,
-                                      'expires': expires})
+        self.db.codes(self.db.codes.code_id==code).update(**{'client_id': client_id,
+                                                            'user_id': user_id,
+                                                            'expires': expires})
 
         return code
 
@@ -207,7 +217,7 @@ class web2pyStorage(OAuthStorage):
         """
         
         try:
-            data = self.db.codes(code).select(self.db.expires_access).first()
+            data = self.db.codes(self.db.codes.code_id==code).select(self.db.expires_access).first()
         except AttributeError:
             self.create_tables()
             return False
@@ -221,22 +231,22 @@ class web2pyStorage(OAuthStorage):
         """Checks if a given code exists on the database or not"""
 
         try:
-            self.db.codes(code) != None
+            self.db.codes(self.db.codes.code_id==code).select().first() != None
         except AttributeError:
             self.create_tables()
             return False
 
     def remove_code(self, code):
         """Removes a temporary code from the database"""
-
-        del self.db.codes[code] # We want to raise an error here, if db doesn't exist
+        
+        self.db.codes(self.db.codes.code_id==code).select().first().delete()
 
     def get_user_id(self, client_id, code):
         """Gets the user ID, given a client application ID and a temporary
         authentication code
         """
         try:
-            return self.db.codes(code).select(self.db.codes.user_id).first()
+            return self.db.codes(self.db.codes.code_id==code).select(self.db.codes.user_id).first()
         except AttributeError:
             self.create_tables()
             return None
@@ -282,7 +292,7 @@ class web2pyStorage(OAuthStorage):
 
             expires_refresh = add_seconds_to_date(now, refresh_lifetime)
 
-        self.db.tokens.update_or_insert(**{'id': referesh_token,
+        self.db.tokens.update_or_insert(**{'refresh_token': referesh_token,
                                            'client_id': client_id,
                                            'user_id': user_id,
                                            'expires_access': expires_access,
@@ -302,7 +312,7 @@ class web2pyStorage(OAuthStorage):
 
         now = datetime.datetime.now()
         credentials = self.get_client_credentials(client_id)
-        old_token = self.db.tokens.update_or_insert({'id': refresh_token,
+        old_token = self.db.tokens.update_or_insert({'refresh_token': refresh_token,
                                                      'client_id': client_id})
 
         if old_token and expired_refresh_token(old_token, now) and credentials['client_secret'] == client_secret:
@@ -328,7 +338,7 @@ class web2pyStorage(OAuthStorage):
         """Returns the token data, if the refresh token exists"""
     
         try:
-            return self.db.tokens(refresh_token) # 'code' == 'refresh_token', right? [pid that is]
+            return self.db.tokens(self.db.tokens.refresh_token==refresh_token).select().first() # 'code' == 'refresh_token', right? [pid that is]
         except AttributeError:
             self.create_tables()
             return None

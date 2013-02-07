@@ -63,7 +63,7 @@ def index():
                   + response_type + '&access_type=' + access_type
         print 'url =', url
     except Exception as ex:
-        redirect(URL(c='error', vars=dict(msg=(ex.msg or ex)))
+        redirect(URL(c='error', vars=dict(msg=(ex.msg or ex))))
 
     return locals()
 
