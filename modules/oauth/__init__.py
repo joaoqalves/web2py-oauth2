@@ -114,8 +114,6 @@ class OAuth2(object):
                        self.CONFIG_ENFORCE_INPUT_REDIRECT: confs[self.CONFIG_ENFORCE_INPUT_REDIRECT],
                        self.CONFIG_ENFORCE_STATE: confs[self.CONFIG_ENFORCE_STATE],
                        self.CONFIG_SUPPORTED_SCOPES: confs[self.CONFIG_SUPPORTED_SCOPES]}
-        
-        print 'storage =', storage
 
         self.storage = storage
 
