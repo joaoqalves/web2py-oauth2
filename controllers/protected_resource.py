@@ -11,7 +11,7 @@ def index():
     response.headers['Content-Type'] = json_headers()
     response.view = json_service()
 
-    print "The colonel's 7 secret herbs and spices are..."
+    msg = "The colonel's 7 secret herbs and spices are..."
 
     return meta_data(CODES['ok'], MESSAGES['ok'],
-                     dict(data='Protected resource'))
+                     dict(data='Protected resource {0}'.format(msg)))

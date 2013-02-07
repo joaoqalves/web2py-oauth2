@@ -144,7 +144,6 @@ class web2pyStorage(OAuthStorage):
         # The /dbname syntax doesn't seem to work with SQLite...
         
         from gluon.tools import DAL
-        print 'self.db_name =', self.db_name
 
         if self.server == self.port == self.db_name == None:
             self.server = 'sqlite://oauth.sqlite'
