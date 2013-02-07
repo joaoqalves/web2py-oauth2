@@ -40,7 +40,7 @@ class OAuthStorage(object):
     # ^ Don't forget to change your SALT! ^
 
     @staticmethod 
-    def generate_hash_512(length = 32, salt = True):
+    def generate_hash_512(length=32, salt=True):
         """Generates a SHA512 random hash. It takes two arguments:
         * length (default: 32)
         * salt (default: True). You should change the salt used for the hash 
@@ -60,7 +60,7 @@ class OAuthStorage(object):
         return m.hexdigest()
 
     @staticmethod
-    def generate_hash_sha1(length = 32, salt = False):
+    def generate_hash_sha1(length=32, salt=False):
         """Generates a SHA512 random hash. It takes two arguments:
         * length (default: 32)
         * salt (default: False). You should change the salt used for the hash 
@@ -79,7 +79,7 @@ class OAuthStorage(object):
         m.update(encode_str)
         return m.hexdigest()
         
-    #defaults provided in child classes
+    # defaults provided in child classes
     def __init__(self, **kwargs):
         """The Storage constructor takes 3 arguments:
         * The database server
@@ -87,11 +87,11 @@ class OAuthStorage(object):
         * The database name
         """
         
-        self.server  = kwargs.get('server', None)
-        self.port    = kwargs.get('port', None)
+        self.server = kwargs.get('server', None)
+        self.port = kwargs.get('port', None)
         self.db_name = kwargs.get('db_name', None)
 
-#'cause DALStorage looks weird :P
+# 'cause DALStorage looks weird :P
 class web2pyStorage(OAuthStorage):
     """Adapter for the DAL (Database Abstraction Layer) created for the web2py framework.
        - Usable with a variety of databases (including GAE, MongoDB and PostgreSQL)
@@ -110,24 +110,24 @@ class web2pyStorage(OAuthStorage):
 
         # Note that (by default): an 'id' primary key is associated with every table.        
         self.db.define_table('clients',
-            Field('client_id'), # pid
+            Field('client_id'),  # pid
             Field('client_secret'),
-            Field('redirect_uri', requires=IS_URL(allowed_schemes=['http','https'])),
+            Field('redirect_uri', requires=IS_URL(allowed_schemes=['http', 'https'])),
             Field('client_name')
         )
 
         self.db.define_table('codes',
-            Field('code_id'), # pid
+            Field('code_id'),  # pid
             Field('client_id', 'reference clients'),
             Field('user_id'),
             Field('expires_access', 'datetime'),
             Field('expires_refresh', 'datetime'),
-            Field('the_scope'), # 'scope' is a reserved SQL keyword
+            Field('the_scope'),  # 'scope' is a reserved SQL keyword
             Field('access_token')
         )
         
         self.db.define_table('tokens',
-            Field('refresh_token'), # pid
+            Field('refresh_token'),  # pid
             Field('client_id'),
             Field('user_id'),
             Field('expires_access'),
@@ -202,7 +202,7 @@ class web2pyStorage(OAuthStorage):
         while self.get_refresh_token(code):
             code = self.generate_hash_sha1()
 
-        self.db.codes(self.db.codes.code_id==code).update(**{'client_id': client_id,
+        self.db.codes(self.db.codes.code_id == code).update(**{'client_id': client_id,
                                                             'user_id': user_id,
                                                             'expires': expires})
 
@@ -216,7 +216,7 @@ class web2pyStorage(OAuthStorage):
         """
         
         try:
-            data = self.db.codes(self.db.codes.code_id==code).select(self.db.expires_access).first()
+            data = self.db.codes(self.db.codes.code_id == code).select(self.db.expires_access).first()
         except AttributeError:
             self.create_tables()
             return False
@@ -230,7 +230,7 @@ class web2pyStorage(OAuthStorage):
         """Checks if a given code exists on the database or not"""
 
         try:
-            self.db.codes(self.db.codes.code_id==code).select().first() != None
+            self.db.codes(self.db.codes.code_id == code).select().first() != None
         except AttributeError:
             self.create_tables()
             return False
@@ -238,14 +238,14 @@ class web2pyStorage(OAuthStorage):
     def remove_code(self, code):
         """Removes a temporary code from the database"""
         
-        self.db.codes(self.db.codes.code_id==code).select().first().delete()
+        self.db.codes(self.db.codes.code_id == code).select().first().delete()
 
     def get_user_id(self, client_id, code):
         """Gets the user ID, given a client application ID and a temporary
         authentication code
         """
         try:
-            return self.db.codes(self.db.codes.code_id==code).select(self.db.codes.user_id).first()
+            return self.db.codes(self.db.codes.code_id == code).select(self.db.codes.user_id).first()
         except AttributeError:
             self.create_tables()
             return None
@@ -261,8 +261,8 @@ class web2pyStorage(OAuthStorage):
         return token['expires_refresh'] < datetime.datetime.now()
 
     def add_access_token(self, client_id, user_id, access_lifetime,
-                         refresh_token = None, refresh_lifetime = None,
-                         expires_refresh = None, the_scope = None):
+                         refresh_token=None, refresh_lifetime=None,
+                         expires_refresh=None, the_scope=None):
         """Generates an access token and adds it to the database. If the refresh
         token does not exist, it will create one. The method takes 6 arguments:
         * The client application ID
@@ -322,13 +322,13 @@ class web2pyStorage(OAuthStorage):
                                          self.config[self.CONFIG_REFRESH_LIFETIME],
                                          old_token['expires_refresh'],
                                          old_token['the_scope'])
-        return (False,)*3
+        return (False,) * 3
         
     def get_access_token(self, access_token):
         """Returns the token data, if the access token exists"""
 
         try:
-            return self.db(self.db.tokens.access_token==access_token).select().first()
+            return self.db(self.db.tokens.access_token == access_token).select().first()
         except AttributeError:
             self.create_tables()
             return None
@@ -337,7 +337,7 @@ class web2pyStorage(OAuthStorage):
         """Returns the token data, if the refresh token exists"""
     
         try:
-            return self.db.tokens(self.db.tokens.refresh_token==refresh_token).select().first() # 'code' == 'refresh_token', right? [pid that is]
+            return self.db.tokens(self.db.tokens.refresh_token == refresh_token).select().first()  # 'code' == 'refresh_token', right? [pid that is]
         except AttributeError:
             self.create_tables()
             return None
@@ -355,11 +355,11 @@ class MongoStorage(OAuthStorage):
         """
         
         if self.server == self.port == self.db_name == None:
-            server='localhost'; port=27017; db_name='oauth'
+            server = 'localhost'; port = 27017; db_name = 'oauth'
 
         self.conn = pymongo.Connection(self.server, self.port)
         self.db = current.cache.ram('mongodb', lambda: self.conn[self.db_name], None)
-        #^ CHANGE ME if you do not use web2py
+        # ^ CHANGE ME if you do not use web2py
 
 
     def add_client(self, client_name, redirect_uri):
@@ -406,7 +406,7 @@ class MongoStorage(OAuthStorage):
 
         self.db.codes.save({'_id': code,
                             'client_id': client_id,
-                            'user_id': user_id, 
+                            'user_id': user_id,
                             'expires': expires})
 
         return code
@@ -454,8 +454,8 @@ class MongoStorage(OAuthStorage):
         return token['expires_refresh'] < datetime.datetime.now()
 
     def add_access_token(self, client_id, user_id, access_lifetime,
-                         refresh_token = None, refresh_lifetime = None,
-                         expires_refresh = None, the_scope = None):
+                         refresh_token=None, refresh_lifetime=None,
+                         expires_refresh=None, the_scope=None):
         """Generates an access token and adds it to the database. If the refresh
         token does not exist, it will create one. The method takes 6 arguments:
         * The client application ID
@@ -515,7 +515,7 @@ class MongoStorage(OAuthStorage):
                                          self.config[self.CONFIG_REFRESH_LIFETIME],
                                          old_token['expires_refresh'],
                                          old_token['the_scope'])
-        return (False,)*3
+        return (False,) * 3
         
     def get_access_token(self, access_token):
         """Returns the token data, if the access token exists"""

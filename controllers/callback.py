@@ -21,11 +21,11 @@ def index():
     if code:
       # Prepares the request parameters
       url = APP['TOKEN_URI']
-      values = dict(code = code,
-                    client_id = APP['CLIENT_ID'],
-                    client_secret= APP['CLIENT_SECRET'],
-                    redirect_uri = APP['REDIRECT_URI'],
-                    grant_type = 'authorization_code')
+      values = dict(code=code,
+                    client_id=APP['CLIENT_ID'],
+                    client_secret=APP['CLIENT_SECRET'],
+                    redirect_uri=APP['REDIRECT_URI'],
+                    grant_type='authorization_code')
                       
       data = urllib.urlencode(values)
       req = urllib2.Request(url, data)
@@ -37,4 +37,4 @@ def index():
       response.view = json_service()
       return content
         
-    redirect(URL(c='error',vars=dict(msg='No "code" parameter provided')))
+    redirect(URL(c='error', vars=dict(msg='No "code" parameter provided')))

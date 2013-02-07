@@ -8,7 +8,7 @@ def index():
     generated.
     """
     
-    from oauth.storage import web2pyStorage as storage # change to MongoStorage if you aren't using DAL
+    from oauth.storage import web2pyStorage as storage  # change to MongoStorage if you aren't using DAL
     storage = storage()
     storage.connect()
     oauth = OAuth2(storage)
