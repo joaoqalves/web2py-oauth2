@@ -2,7 +2,6 @@ web2py-oauth2
 =============
 
 An OAuth 2.0 module for web2py framework, based in:
-* [João Alves original web2py-oauth2 code](https://github.com/joaoqalves/web2py-oauth2)
 * [OAuth 2.0 draft 20](http://tools.ietf.org/html/draft-ietf-oauth-v2-20)
 * [PHP OAuth 2 Server](https://github.com/quizlet/oauth2-php)
 * [YouTube API v2.0](https://developers.google.com/youtube/2.0/developers_guide_protocol#Authentication)
@@ -41,7 +40,10 @@ TODO
 NOTE
 ------------
 
-My major changes to João Alves' code can be summarised in three points:
+This code was originally written by me and [Tiago Pereira](http://fe.up.pt/~ei08023/curriculum)
+and after that was changed by [Samuel Marks](http://github.com/SamuelMarks)
+
+The major changes that Samuel did in the code can be summarised in three points:
 
 1. Reviewed the entire codebase; improving quality, fixing hacks and improving formatting along the way.
 2. Rewrote all the relevant exceptions to use gluon.http.HTTP (with correct HTTP error codes + easier to understand specific exception messages)
