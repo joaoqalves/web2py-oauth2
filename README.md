@@ -40,7 +40,7 @@ TODO
 NOTE
 ------------
 
-This code was originally written by me and [Tiago Pereira](http://fe.up.pt/~ei08023/curriculum)
+This code was originally written by [João Alves](http://joaoqalves.net/) and [Tiago Pereira](http://fe.up.pt/~ei08023/curriculum)
 and after that was changed by [Samuel Marks](http://github.com/SamuelMarks)
 
 The major changes that Samuel did in the code can be summarised in three points:
